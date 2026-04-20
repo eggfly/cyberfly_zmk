@@ -1,0 +1,56 @@
+/*
+ * Board-specific overlay for CyberFly Keyboard on nice!nano (nRF52840)
+ * PWM0: backlight on P0.15
+ * PWM1: RGB status LED on P0.14 (R), P0.16 (G), P0.19 (B)
+ */
+
+/* Disable the nice_nano on-board LED node to avoid conflict with P0.15 */
+&{/leds} {
+    status = "disabled";
+};
+
+/* PWM0 for backlight */
+&pinctrl {
+    pwm0_default: pwm0_default {
+        group1 {
+            psels = <NRF_PSEL(PWM_OUT0, 0, 15)>;
+        };
+    };
+    pwm0_sleep: pwm0_sleep {
+        group1 {
+            psels = <NRF_PSEL(PWM_OUT0, 0, 15)>;
+            low-power-enable;
+        };
+    };
+
+    /* PWM1 for RGB LED */
+    pwm1_default: pwm1_default {
+        group1 {
+            psels = <NRF_PSEL(PWM_OUT0, 0, 14)>,
+                    <NRF_PSEL(PWM_OUT1, 0, 16)>,
+                    <NRF_PSEL(PWM_OUT2, 0, 19)>;
+        };
+    };
+    pwm1_sleep: pwm1_sleep {
+        group1 {
+            psels = <NRF_PSEL(PWM_OUT0, 0, 14)>,
+                    <NRF_PSEL(PWM_OUT1, 0, 16)>,
+                    <NRF_PSEL(PWM_OUT2, 0, 19)>;
+            low-power-enable;
+        };
+    };
+};
+
+&pwm0 {
+    status = "okay";
+    pinctrl-0 = <&pwm0_default>;
+    pinctrl-1 = <&pwm0_sleep>;
+    pinctrl-names = "default", "sleep";
+};
+
+&pwm1 {
+    status = "okay";
+    pinctrl-0 = <&pwm1_default>;
+    pinctrl-1 = <&pwm1_sleep>;
+    pinctrl-names = "default", "sleep";
+};

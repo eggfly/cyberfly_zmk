@@ -1,0 +1,8 @@
+# Copyright (c) 2025 CyberFly
+# SPDX-License-Identifier: MIT
+
+description: Erase NVS settings then reboot into UF2 bootloader
+
+compatible: "cyberfly,behavior-reset-settings-bootloader"
+
+include: zero_param.yaml

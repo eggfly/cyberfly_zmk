@@ -1,0 +1,17 @@
+if SHIELD_CYBERFLY_KEYBOARD
+
+config ZMK_KEYBOARD_NAME
+    default "CyberFly KBD"
+
+config CYBERFLY_RGB_STATUS_LED
+    bool "RGB status LED indicator"
+    default y
+    select PWM
+    select LED_PWM
+
+config CYBERFLY_MOUSE_TEST
+    bool "Fake mouse circle movement for BLE HID testing"
+    default n
+    depends on ZMK_POINTING
+
+endif

@@ -433,6 +433,52 @@ nrfjprog --family NRF52 --reset
 4. **参考 Nice!Nano 开源原理图** (如果有) 或 SuperMini NRF52840 原理图
 5. **J-Link 先买一个**，自制 PCB 必须通过 SWD 首次烧录，出问题也需要 SWD 救砖
 
+## 已知问题与解决方案
+
+### ✅ 同列按键组合失效 (已修复: 高阻态扫描)
+
+**现象**: 无二极管 dome sheet 矩阵中，同列两键同时按下时检测不到（如 Shift+E, Fn+ESC）。
+
+**根因**: ZMK 默认 kscan 驱动将不活跃 row 驱动 LOW，无二极管时同列按键会通过 dome 开关将 column 线短路到 LOW 的 row，导致读不出 HIGH。
+
+**修复**: 修改 `kscan_gpio_matrix.c`，扫描时将不活跃 row 切换为 GPIO_INPUT（高阻态），与 QMK 行为一致。
+
+### ✅ iOS 蓝牙扫描显示旧设备名
+
+**现象**: 改了 BLE 广播名后，iOS 蓝牙设置扫描列表仍显示旧名字 "KeebDeck Basic"。
+
+**根因**: iOS 根据 BLE MAC 地址缓存设备名。即使固件广播新名字，iOS 扫描界面不会更新已知 MAC 的显示名，直到建立一次连接。
+
+**解决**: 直接点击配对/连接，连接成功后 iOS 自动刷新为新名字 "CyberFly"。
+
+**注意**: 这不是固件问题，是 iOS 系统行为。nRF Connect app 可以看到真实广播名，不受缓存影响。
+
+### ✅ 电池模式下禁用 PWM 背光
+
+**策略**: 当检测到非 USB 供电（即 BLE + 电池模式）时，固件强制关闭 PWM 背光 LED，用户无法通过 BL_CYCLE 手动开启。
+
+**原因**: AP3032 boost 驱动 + 键盘背光 LED 耗电极大，电池模式下开启背光会迅速耗尽电量。nRF52840 本身功耗约 5-10mA（BLE 广播态），而背光在 30% 亮度下额外消耗 30-50mA+，电池续航会从数周降至数小时。
+
+**实现**: `app/src/backlight.c` 的 `zmk_backlight_update()` 中检查 `zmk_usb_is_powered()`，非 USB 供电时强制 brt=0。同时启用 `CONFIG_ZMK_BACKLIGHT_AUTO_OFF_USB=y`，使 USB 插拔事件自动触发背光状态刷新。
+
+**行为**:
+- 插 USB: 背光正常工作，可通过 Fn+Space 循环调节亮度
+- 拔 USB (电池): 背光立即关闭，Fn+Space 仍可调整亮度值（NVS 保存），但 PWM 输出始终为 0
+- 重新插 USB: 背光恢复为之前保存的亮度
+
+### Bootloader 呼吸灯说明
+
+进入 UF2 Bootloader 后看到背光做呼吸效果，这是 **nice_nano bootloader 自身的代码**，不是 ZMK 固件：
+
+- 实现文件: `nice-bootloader/src/boards/boards.c` → `led_tick()`
+- 驱动引脚: P0.15 (硬件 PWM0 三角波)
+- 呼吸速度:
+  - USB 未挂载: 300ms 周期 (快脉冲)
+  - USB 已挂载: 3000ms 周期 (慢呼吸)
+  - 写入 UF2 中: 100ms 周期 (快速闪烁)
+- 最大亮度: 硬编码 31% (`0x4f/0xff`)
+- 不可运行时配置，修改需重新编译 bootloader
+
 ## 注意事项
 
 - Zephyr SDK 1.0.0 与当前 Zephyr 4.1.0 **不兼容**，必须使用 0.16.x

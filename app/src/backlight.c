@@ -34,6 +34,24 @@ static const struct device *const backlight_dev = DEVICE_DT_GET(DT_CHOSEN(zmk_ba
 
 #define BRT_MAX 100
 
+/* PWM duty correction for AP3032 boost driver at 25kHz.
+ * Dead zone: 0-2% PWM produces no visible light.
+ * Saturation: above ~30% brightness barely changes.
+ * Maps user 0-100% to PWM 0,3-30% (gamma 2.0, skipping dead zone). */
+static const uint8_t gamma_lut[101] = {
+      0,  3,  3,  3,  3,  3,  3,  3,  3,  3,
+      3,  3,  3,  3,  4,  4,  4,  4,  4,  4,
+      4,  4,  4,  4,  5,  5,  5,  5,  5,  5,
+      5,  6,  6,  6,  6,  6,  6,  7,  7,  7,
+      7,  8,  8,  8,  8,  8,  9,  9,  9,  9,
+     10, 10, 10, 11, 11, 11, 11, 12, 12, 12,
+     13, 13, 13, 14, 14, 14, 15, 15, 15, 16,
+     16, 17, 17, 17, 18, 18, 19, 19, 19, 20,
+     20, 21, 21, 22, 22, 23, 23, 23, 24, 24,
+     25, 25, 26, 26, 27, 27, 28, 28, 29, 29,
+     30
+};
+
 struct backlight_state {
     uint8_t brightness;
     bool on;
@@ -44,10 +62,16 @@ static struct backlight_state state = {.brightness = CONFIG_ZMK_BACKLIGHT_BRT_ST
 
 static int zmk_backlight_update(void) {
     uint8_t brt = zmk_backlight_get_brt();
-    LOG_DBG("Update backlight brightness: %d%%", brt);
+#if IS_ENABLED(CONFIG_ZMK_USB)
+    if (!zmk_usb_is_powered()) {
+        brt = 0;
+    }
+#endif
+    uint8_t pwm_brt = gamma_lut[MIN(brt, 100)];
+    LOG_DBG("Update backlight brightness: %d%% -> PWM %d%%", brt, pwm_brt);
 
     for (int i = 0; i < BACKLIGHT_NUM_LEDS; i++) {
-        int rc = led_set_brightness(backlight_dev, i, brt);
+        int rc = led_set_brightness(backlight_dev, i, pwm_brt);
         if (rc != 0) {
             LOG_ERR("Failed to update backlight LED %d: %d", i, rc);
             return rc;

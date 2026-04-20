@@ -368,6 +368,11 @@ config ZMK_BACKLIGHT_AUTO_OFF_USB
 
 endif # ZMK_BACKLIGHT
 
+config CYBERFLY_RGB_STATUS_LED
+    bool "RGB status LED indicator (CyberFly)"
+    select PWM
+    select LED_PWM
+
 endmenu # Display/LED Options
 
 rsource "src/pointing/Kconfig"
