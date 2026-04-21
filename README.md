@@ -1,6 +1,6 @@
 # CyberFly Keyboard
 
-A compact BLE mechanical keyboard powered by nRF52840 (E73-2G4M08S1C module) running [ZMK](https://zmk.dev/) firmware.
+A compact BLE mechanical keyboard powered by nRF52840 IC running [ZMK](https://zmk.dev/) firmware.
 
 ## Features
 
