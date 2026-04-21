@@ -1,13 +1,25 @@
-# Zephyr™ Mechanical Keyboard (ZMK) Firmware
+# CyberFly Keyboard
 
-[![Discord](https://img.shields.io/discord/719497620560543766)](https://zmk.dev/community/discord/invite)
-[![Build](https://github.com/zmkfirmware/zmk/workflows/Build/badge.svg)](https://github.com/zmkfirmware/zmk/actions)
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](CODE_OF_CONDUCT.md)
+A compact BLE mechanical keyboard powered by nRF52840 (E73-2G4M08S1C module) running [ZMK](https://zmk.dev/) firmware.
 
-[ZMK Firmware](https://zmk.dev/) is an open source ([MIT](LICENSE)) keyboard firmware built on the [Zephyr™ Project](https://www.zephyrproject.org/) Real Time Operating System (RTOS). ZMK's goal is to provide a modern, wireless, and powerful firmware free of licensing issues.
+## Features
 
-Check out the website to learn more: https://zmk.dev/.
+- nRF52840 BLE 5.0 + USB-C dual mode
+- 6-row compact QWERTY layout with PlayStation-style function keys
+- Built-in Li-battery with charging
+- Open-source hardware and firmware ([MIT](LICENSE))
+- USB VID:PID `1209:CF01` ([pid.codes](https://pid.codes/1209/CF01/))
 
-You can also come join our [ZMK Discord Server](https://zmk.dev/community/discord/invite).
+## Photos
 
-To review features, check out the [feature overview](https://zmk.dev/docs/). ZMK is under active development, and new features are listed with the [enhancement label](https://github.com/zmkfirmware/zmk/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement) in GitHub. Please feel free to add 👍 to the issue description of any requests to upvote the feature.
+| Front (backlight on) | Front (daylight) |
+|---|---|
+| ![CyberFly Keyboard - Backlight](images/cyberfly_keyboard_front_lit.jpg) | ![CyberFly Keyboard - Daylight](images/cyberfly_keyboard_front.jpg) |
+
+## Firmware
+
+This repository is a fork of [ZMK Firmware](https://zmk.dev/) with CyberFly-specific board definitions and keymap configurations.
+
+[![Build](https://github.com/eggfly/bufferfly_zmk/workflows/Build/badge.svg)](https://github.com/eggfly/bufferfly_zmk/actions)
+
+Check out the ZMK website to learn more: https://zmk.dev/
