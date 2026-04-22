@@ -17,3 +17,7 @@ __pycache__
 
 # clangd
 app/.cache/
+.cache/
+
+# build artifacts
+build_reset/
