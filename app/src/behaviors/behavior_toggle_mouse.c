@@ -1,5 +1,5 @@
 /*
- * CyberFly: Cycle mouse mode OFF → M1 (accel) → M2 (gyro) → OFF.
+ * CyberFly: Cycle mouse mode OFF → M1 (Kalman+SS) → M2 (accel) → OFF.
  */
 
 #define DT_DRV_COMPAT cyberfly_behavior_toggle_mouse
@@ -30,8 +30,8 @@ extern void cyberfly_rgb_flash_mouse_mode(enum cyberfly_mouse_mode mode);
 static const char *mode_name(enum cyberfly_mouse_mode m) {
     switch (m) {
     case CYBERFLY_MOUSE_OFF: return "OFF";
-    case CYBERFLY_MOUSE_M1:  return "M1-accel";
-    case CYBERFLY_MOUSE_M2:  return "M2-gyro";
+    case CYBERFLY_MOUSE_M1:  return "M1-kalman";
+    case CYBERFLY_MOUSE_M2:  return "M2-accel";
     default:                 return "?";
     }
 }

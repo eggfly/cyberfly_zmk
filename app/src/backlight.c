@@ -119,7 +119,12 @@ static int zmk_backlight_init(void) {
     k_work_init_delayable(&backlight_save_work, backlight_save_work_handler);
 #endif
 #if IS_ENABLED(CONFIG_ZMK_BACKLIGHT_AUTO_OFF_USB)
-    state.on = zmk_usb_is_powered();
+    if (zmk_usb_is_powered()) {
+        state.brightness = CONFIG_ZMK_BACKLIGHT_BRT_STEP;
+        state.on = true;
+    } else {
+        state.on = false;
+    }
 #endif
     return zmk_backlight_update();
 }
@@ -195,8 +200,13 @@ static int backlight_event_listener(const zmk_event_t *eh) {
 
 #if IS_ENABLED(CONFIG_ZMK_BACKLIGHT_AUTO_OFF_USB)
     if (as_zmk_usb_conn_state_changed(eh)) {
-        static bool prev_state = false;
-        return backlight_auto_state(&prev_state, zmk_usb_is_powered());
+        if (zmk_usb_is_powered()) {
+            state.brightness = CONFIG_ZMK_BACKLIGHT_BRT_STEP;
+            state.on = true;
+        } else {
+            state.on = false;
+        }
+        return zmk_backlight_update();
     }
 #endif
 

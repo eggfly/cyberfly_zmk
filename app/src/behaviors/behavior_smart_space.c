@@ -8,14 +8,15 @@
 
 #include <zephyr/device.h>
 #include <zephyr/logging/log.h>
-#include <zephyr/input/input.h>
-#include <zephyr/dt-bindings/input/input-event-codes.h>
 
 #include <drivers/behavior.h>
 #include <zmk/behavior.h>
 #include <zmk/event_manager.h>
 #include <zmk/events/keycode_state_changed.h>
+#include <zmk/hid.h>
+#include <zmk/endpoints.h>
 #include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/pointing.h>
 #include <cyberfly/mouse_mode.h>
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
@@ -28,39 +29,42 @@ extern enum cyberfly_mouse_mode cyberfly_mouse_get_mode(void);
 #define ROLE_SPACE  1
 #define ROLE_RCLICK 2
 
-static bool is_mouse_click(uint32_t role, enum cyberfly_mouse_mode mode) {
-    return mode != CYBERFLY_MOUSE_OFF && role != ROLE_SPACE;
-}
+static bool pressed_as_mouse[3];
 
 static int on_keymap_binding_pressed(struct zmk_behavior_binding *binding,
                                      struct zmk_behavior_binding_event event) {
     uint32_t role = binding->param1;
+    if (role > ROLE_RCLICK) role = ROLE_SPACE;
     enum cyberfly_mouse_mode mode = cyberfly_mouse_get_mode();
+    bool use_mouse = (mode != CYBERFLY_MOUSE_OFF && role != ROLE_SPACE);
 
-    if (!is_mouse_click(role, mode)) {
+    pressed_as_mouse[role] = use_mouse;
+
+    if (!use_mouse) {
         return raise_zmk_keycode_state_changed_from_encoded(SPACE, true,
                                                             event.timestamp);
     }
 
-    int btn = (role == ROLE_LCLICK) ? INPUT_BTN_0 : INPUT_BTN_1;
-    input_report_key(zmk_behavior_get_binding(binding->behavior_dev),
-                     btn, 1, true, K_FOREVER);
+    zmk_mouse_button_flags_t btn = (role == ROLE_LCLICK) ? MB1 : MB2;
+    zmk_hid_mouse_buttons_press(btn);
+    zmk_endpoint_send_mouse_report();
     return 0;
 }
 
 static int on_keymap_binding_released(struct zmk_behavior_binding *binding,
                                       struct zmk_behavior_binding_event event) {
     uint32_t role = binding->param1;
-    enum cyberfly_mouse_mode mode = cyberfly_mouse_get_mode();
+    if (role > ROLE_RCLICK) role = ROLE_SPACE;
 
-    if (!is_mouse_click(role, mode)) {
+    if (!pressed_as_mouse[role]) {
         return raise_zmk_keycode_state_changed_from_encoded(SPACE, false,
                                                             event.timestamp);
     }
 
-    int btn = (role == ROLE_LCLICK) ? INPUT_BTN_0 : INPUT_BTN_1;
-    input_report_key(zmk_behavior_get_binding(binding->behavior_dev),
-                     btn, 0, true, K_FOREVER);
+    pressed_as_mouse[role] = false;
+    zmk_mouse_button_flags_t btn = (role == ROLE_LCLICK) ? MB1 : MB2;
+    zmk_hid_mouse_buttons_release(btn);
+    zmk_endpoint_send_mouse_report();
     return 0;
 }
 

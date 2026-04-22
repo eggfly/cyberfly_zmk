@@ -151,13 +151,19 @@ static int kscan_matrix_interrupt_configure(const struct device *dev, const gpio
 
 #if USE_INTERRUPTS
 static int kscan_matrix_interrupt_enable(const struct device *dev) {
+    const struct kscan_matrix_config *config = dev->config;
+
     int err = kscan_matrix_interrupt_configure(dev, GPIO_INT_LEVEL_ACTIVE);
     if (err) {
         return err;
     }
 
-    // While interrupts are enabled, set all outputs active so a pressed key
-    // will trigger an interrupt.
+    // Restore output mode and drive all rows HIGH so any key press
+    // triggers an interrupt on the corresponding column.
+    for (int i = 0; i < config->outputs.len; i++) {
+        const struct gpio_dt_spec *gpio = &config->outputs.gpios[i].spec;
+        gpio_pin_configure_dt(gpio, GPIO_OUTPUT);
+    }
     return kscan_matrix_set_all_outputs(dev, 1);
 }
 #endif
@@ -219,10 +225,19 @@ static int kscan_matrix_read(const struct device *dev) {
     struct kscan_matrix_data *data = dev->data;
     const struct kscan_matrix_config *config = dev->config;
 
+    // Set all outputs to high-impedance before scanning so that
+    // inactive rows don't sink current through pressed keys on the
+    // same column (no-diode matrix support).
+    for (int i = 0; i < config->outputs.len; i++) {
+        const struct gpio_dt_spec *gpio = &config->outputs.gpios[i].spec;
+        gpio_pin_configure_dt(gpio, GPIO_INPUT);
+    }
+
     // Scan the matrix.
     for (int i = 0; i < config->outputs.len; i++) {
         const struct kscan_gpio *out_gpio = &config->outputs.gpios[i];
 
+        gpio_pin_configure_dt(&out_gpio->spec, GPIO_OUTPUT);
         int err = gpio_pin_set_dt(&out_gpio->spec, 1);
         if (err) {
             LOG_ERR("Failed to set output %i active: %i", out_gpio->index, err);
@@ -248,11 +263,7 @@ static int kscan_matrix_read(const struct device *dev) {
                                 &config->debounce_config);
         }
 
-        err = gpio_pin_set_dt(&out_gpio->spec, 0);
-        if (err) {
-            LOG_ERR("Failed to set output %i inactive: %i", out_gpio->index, err);
-            return err;
-        }
+        gpio_pin_configure_dt(&out_gpio->spec, GPIO_INPUT);
 
 #if CONFIG_ZMK_KSCAN_MATRIX_WAIT_BETWEEN_OUTPUTS > 0
         k_busy_wait(CONFIG_ZMK_KSCAN_MATRIX_WAIT_BETWEEN_OUTPUTS);
