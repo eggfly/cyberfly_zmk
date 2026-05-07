@@ -21,4 +21,30 @@ config CYBERFLY_AIR_MOUSE
     select SENSOR
     select QMI8658A
 
+config CYBERFLY_I2C_SLAVE
+    bool "Expose keys as I2C slave (CardKB/BBQ10-compatible superset)"
+    default n
+    depends on I2C
+    select I2C_TARGET
+    select I2C_TARGET_BUFFER_MODE
+    help
+      Expose the CyberFly keyboard as an I2C target device so another MCU
+      can poll or read keypress/ASCII events. Default I2C address is 0x5F
+      (M5 CardKB compatible). See cyberfly-i2c-slave-protocol.md.
+
+config CYBERFLY_I2C_SLAVE_ADDR
+    hex "I2C slave address (7-bit)"
+    default 0x5F
+    range 0x08 0x77
+    depends on CYBERFLY_I2C_SLAVE
+    help
+      7-bit I2C slave address. 0x5F matches M5 CardKB/CardKB2.
+      0x1F matches Solder Party BBQ10KBD.
+
+config CYBERFLY_I2C_SLAVE_FIFO_DEPTH
+    int "ASCII + event FIFO depth"
+    default 31
+    range 4 127
+    depends on CYBERFLY_I2C_SLAVE
+
 endif

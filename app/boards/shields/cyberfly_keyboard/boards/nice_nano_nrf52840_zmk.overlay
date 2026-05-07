@@ -2,6 +2,8 @@
  * Board-specific overlay for CyberFly Keyboard on nice!nano (nRF52840)
  * PWM0: backlight on P0.15
  * PWM1: RGB status LED on P0.14 (R), P0.16 (G), P0.19 (B)
+ * I2C0 (TWIM): QMI8658A IMU master (SDA=P0.26, SCL=P1.09)
+ * I2C1 (TWIS): CyberFly I2C slave target (SDA=P0.04, SCL=P0.05)
  */
 
 /* Disable the nice_nano on-board LED node to avoid conflict with P0.15 */
@@ -23,6 +25,37 @@
                     <NRF_PSEL(TWIM_SCL, 1, 9)>;
             low-power-enable;
         };
+    };
+
+    /* I2C1 as TWIS (slave) for CyberFly external host interface */
+    i2c1_target_default: i2c1_target_default {
+        group1 {
+            psels = <NRF_PSEL(TWIS_SDA, 0, 4)>,
+                    <NRF_PSEL(TWIS_SCL, 0, 5)>;
+        };
+    };
+    i2c1_target_sleep: i2c1_target_sleep {
+        group1 {
+            psels = <NRF_PSEL(TWIS_SDA, 0, 4)>,
+                    <NRF_PSEL(TWIS_SCL, 0, 5)>;
+            low-power-enable;
+        };
+    };
+};
+
+/* nice!nano defines i2c1 as nordic,nrf-twi (master). Rebind to TWIS (slave). */
+&i2c1 {
+    /* Override compatible from nordic,nrf-twi -> nordic,nrf-twis */
+    compatible = "nordic,nrf-twis";
+    status = "okay";
+    pinctrl-0 = <&i2c1_target_default>;
+    pinctrl-1 = <&i2c1_target_sleep>;
+    pinctrl-names = "default", "sleep";
+};
+
+/ {
+    aliases {
+        cyberfly-i2c-slave-bus = &i2c1;
     };
 };
 
