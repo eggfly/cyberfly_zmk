@@ -1,8 +1,0 @@
-file_format: "1"
-id: cyberfly
-name: CyberFly
-type: shield
-url: https://github.com/eggfly/cyberfly_zmk
-requires: [pro_micro]
-features:
-  - keys

@@ -1,9 +1,0 @@
-# Copyright (c) 2025 The ZMK Contributors
-# SPDX-License-Identifier: MIT
-
-if SHIELD_CYBERFLY
-
-config ZMK_KEYBOARD_NAME
-    default "CyberFly"
-
-endif
